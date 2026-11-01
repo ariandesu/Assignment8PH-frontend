@@ -1,11 +1,11 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, MapPin, Image as ImageIcon, CalendarClock, Type, Tag } from 'lucide-react';
+import { Loader2, MapPin, Image as ImageIcon, ImageOff, CalendarClock, Type, Tag } from 'lucide-react';
 import { EVENT_CATEGORIES, toDateTimeLocal } from '@/lib/utils';
-import EventImage from '@/components/shared/EventImage';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input, Textarea, fieldClasses } from '@/components/ui/input';
@@ -25,6 +25,19 @@ export const eventSchema = z.object({
     .refine((v) => new Date(v) > new Date(), 'Event date must be in the future'),
 });
 
+const IMAGE_LINK_ERROR =
+  "This link doesn't open an image. Right-click the picture and choose \"Copy image address\" (the link usually ends in .jpg, .png or .webp).";
+
+// Resolves true only if the browser can actually display the URL as an image
+const canLoadImage = (url) =>
+  new Promise((resolve) => {
+    const img = new window.Image();
+    const timer = setTimeout(() => resolve(false), 10_000);
+    img.onload = () => { clearTimeout(timer); resolve(img.naturalWidth > 0); };
+    img.onerror = () => { clearTimeout(timer); resolve(false); };
+    img.src = url;
+  });
+
 const EMPTY = { title: '', description: '', category: '', image: '', location: '', eventDate: '' };
 
 export default function EventForm({ initialValues, onSubmit, submitLabel, submittingLabel }) {
@@ -32,6 +45,8 @@ export default function EventForm({ initialValues, onSubmit, submitLabel, submit
     register,
     handleSubmit,
     watch,
+    setError,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(eventSchema),
@@ -42,9 +57,33 @@ export default function EventForm({ initialValues, onSubmit, submitLabel, submit
 
   const imageUrl = watch('image');
   const minDate = toDateTimeLocal(Date.now() + 60_000);
+  const isHttpUrl = /^https?:\/\/\S+$/i.test(imageUrl?.trim() || '');
 
-  const submit = (values) =>
-    onSubmit({ ...values, eventDate: new Date(values.eventDate).toISOString() });
+  // Live preview check: 'checking' | 'ok' | 'broken'
+  const [previewStatus, setPreviewStatus] = useState('checking');
+  useEffect(() => {
+    if (!isHttpUrl) return undefined;
+    let cancelled = false;
+    setPreviewStatus('checking');
+    const timer = setTimeout(async () => {
+      const ok = await canLoadImage(imageUrl.trim());
+      if (cancelled) return;
+      setPreviewStatus(ok ? 'ok' : 'broken');
+      if (ok) clearErrors('image');
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [imageUrl, isHttpUrl, clearErrors]);
+
+  const submit = async (values) => {
+    if (!(await canLoadImage(values.image))) {
+      setError('image', { message: IMAGE_LINK_ERROR }, { shouldFocus: true });
+      return;
+    }
+    await onSubmit({ ...values, eventDate: new Date(values.eventDate).toISOString() });
+  };
 
   return (
     <Card asChild>
@@ -86,9 +125,20 @@ export default function EventForm({ initialValues, onSubmit, submitLabel, submit
         <Input id="image" type="url" {...register('image')} aria-invalid={Boolean(errors.image)} className="pl-10" placeholder="https://images.unsplash.com/..." />
       </Field>
 
-      {imageUrl && !errors.image && /^https?:\/\//.test(imageUrl) && (
+      {isHttpUrl && !errors.image && (
         <div className="rounded-2xl overflow-hidden border border-sage dark:border-white/10">
-          <EventImage key={imageUrl} src={imageUrl} alt="Thumbnail preview" className="w-full h-48" />
+          {previewStatus === 'broken' ? (
+            <p className="flex items-center gap-2 p-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10">
+              <ImageOff className="w-4 h-4 shrink-0" /> {IMAGE_LINK_ERROR}
+            </p>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl.trim()}
+              alt="Thumbnail preview"
+              className={cn('w-full h-48 object-cover bg-sage dark:bg-[#1f2d26]', previewStatus === 'checking' && 'animate-pulse')}
+            />
+          )}
         </div>
       )}
 
