@@ -1,181 +1,81 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
-// Profile page for updating display name and profile picture
-
-import { useEffect, useState } from 'react';
-import { getProfile, updateProfile } from '@/lib/api';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
+import { Loader2, Mail, User, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { Loader2, User, Mail, Image as ImageIcon } from 'lucide-react';
+import { updateUser, useSession } from '@/lib/auth-client';
+import { clearToken } from '@/lib/api';
+import AuthField from '@/components/auth/AuthField';
+import Avatar from '@/components/shared/Avatar';
+
 const profileSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  image: z.string().url('Invalid image URL').optional().or(z.literal('')),
+  name: z.string().trim().min(2, 'Name must be at least 2 characters').max(60, 'Name is too long'),
+  image: z.string().trim().url('Enter a valid image URL (https://...)').or(z.literal('')),
 });
 
 export default function ProfilePage() {
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [userData, setUserData] = useState(null);
+  const router = useRouter();
+  const { data: session } = useSession();
+  const user = session?.user;
 
-  const form = useForm({
+  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting, isDirty } } = useForm({
     resolver: zodResolver(profileSchema),
-    defaultValues: { name: '', email: '', image: '' },
+    defaultValues: { name: '', image: '' },
   });
 
   useEffect(() => {
-    const loadProfile = async () => {
-      setLoading(true);
-      try {
-        const data = await getProfile();
-        setUserData(data.user);
-        form.reset({
-          name: data.user.name || '',
-          email: data.user.email || '',
-          image: data.user.image || '',
-        });
-      } catch (err) {
-        toast.error(err.message || 'Failed to load profile');
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadProfile();
-  }, [form]);
+    if (user) reset({ name: user.name || '', image: user.image || '' });
+  }, [user, reset]);
 
-  const onSubmit = async (data) => {
-    setSaving(true);
-    try {
-      const result = await updateProfile({
-        name: data.name,
-        email: data.email,
-        image: data.image || undefined,
-      });
-      toast.success('Profile updated successfully!');
-      setUserData(result.user);
-    } catch (err) {
-      toast.error(err.message || 'Failed to update profile');
-    } finally {
-      setSaving(false);
+  const onSubmit = async (values) => {
+    const { error } = await updateUser({ name: values.name, image: values.image || null });
+    if (error) {
+      toast.error(error.message || 'Could not update your profile.');
+      return;
     }
+    clearToken(); // next API call picks up a token with the new name/photo
+    toast.success('Profile updated successfully!');
+    router.refresh();
   };
 
-  if (loading) {
-    return (
-      <section className="py-20">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex gap-4">
-            <LoadingSkeleton className="w-20 h-20 rounded-full" />
-            <div className="flex-1">
-              <LoadingSkeleton className="h-8 w-3/4 mb-3" />
-              <LoadingSkeleton className="h-4 w-1/2 mb-6" />
-              <LoadingSkeleton className="h-4 w-full mb-3" />
-              <LoadingSkeleton className="h-4 w-2/3 mb-3" />
-              <LoadingSkeleton className="h-4 w-1/2" />
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  if (!user) return null;
 
-  if (!userData) {
-    return null;
-  }
+  const previewImage = watch('image');
+  const previewName = watch('name');
 
   return (
-    <section className="py-20">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-10">
-          <h1 className="font-heading text-2xl font-bold text-forest-900 dark:text-white">
-            My Profile
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Manage your account information.
-          </p>
-        </div>
+    <section className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
+      <div className="mb-8">
+        <h1 className="section-title">My Profile</h1>
+        <p className="section-subtitle">Update the name and photo other volunteers see.</p>
+      </div>
 
-        <div className="card p-8">
-          <div className="flex flex-col md:flex-row gap-8 items-start">
-            <div className="flex-shrink-0">
-              <div className="relative">
-                <ImageIcon
-                  src={userData.image || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userData.name || 'User') + '&background=174D3B&color=fff'}
-                  alt="Profile"
-                  className="w-20 h-20 rounded-full object-cover border-4 border-forest-100 dark:border-[#1f2d26]"
-                />
-              </div>
-            </div>
-            <div className="flex-1">
-              <h2 className="font-heading text-xl font-bold text-forest-900 dark:text-white mb-1">
-                {userData.name}
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400">{userData.email}</p>
-            </div>
+      <div className="card p-6 sm:p-8">
+        <div className="flex items-center gap-4 pb-6 mb-6 border-b border-sage dark:border-white/10">
+          <Avatar src={errors.image ? user.image : previewImage} name={previewName || user.name} className="w-20 h-20 text-2xl" />
+          <div className="min-w-0">
+            <p className="font-heading text-xl font-bold text-forest-900 dark:text-white truncate">{previewName || user.name}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5 truncate">
+              <Mail className="w-4 h-4 shrink-0" /> {user.email}
+            </p>
           </div>
-
-          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Full Name
-              </label>
-              <input
-                {...form.register('name')}
-                className={`w-full px-4 py-3 rounded-xl border transition-all focus:ring-2 focus:ring-forest-500 focus:border-forest-500 outline-none ${
-                  form.formState.errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600 dark:bg-[#16221c] text-gray-900 dark:text-white'
-                }`}
-              />
-              {form.formState.errors.name && (
-                <p className="text-xs text-red-500">{form.formState.errors.name.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
-              </label>
-              <input
-                {...form.register('email')}
-                type="email"
-                className={`w-full px-4 py-3 rounded-xl border transition-all focus:ring-2 focus:ring-forest-500 focus:border-forest-500 outline-none ${
-                  form.formState.errors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-600 dark:bg-[#16221c] text-gray-900 dark:text-white'
-                }`}
-              />
-              {form.formState.errors.email && (
-                <p className="text-xs text-red-500">{form.formState.errors.email.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Profile Picture URL
-              </label>
-              <input
-                {...form.register('image')}
-                type="url"
-                className={`w-full px-4 py-3 rounded-xl border transition-all focus:ring-2 focus:ring-forest-500 focus:border-forest-500 outline-none ${
-                  form.formState.errors.image ? 'border-red-500' : 'border-gray-300 dark:border-gray-600 dark:bg-[#16221c] text-gray-900 dark:text-white'
-                }`}
-                placeholder="https://example.com/photo.jpg"
-              />
-              {form.formState.errors.image && (
-                <p className="text-xs text-red-500">{form.formState.errors.image.message}</p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full btn-primary py-4 disabled:opacity-70 flex items-center justify-center gap-2"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Update Profile'}
-            </button>
-          </form>
         </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+          <AuthField label="Name" icon={User} error={errors.name?.message} {...register('name')} />
+          <AuthField label="Photo URL" icon={ImageIcon} type="url" placeholder="https://example.com/photo.jpg" error={errors.image?.message} {...register('image')} />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+            <input value={user.email} disabled className="input opacity-70 cursor-not-allowed" />
+          </div>
+          <button type="submit" disabled={isSubmitting || !isDirty} className="w-full btn-primary inline-flex items-center justify-center gap-2 disabled:opacity-60">
+            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />} Save Changes
+          </button>
+        </form>
       </div>
     </section>
   );
