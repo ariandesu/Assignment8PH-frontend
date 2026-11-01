@@ -192,3 +192,4 @@ export default function Navbar() {
     </nav>
   );
 }
+/* Navbar and footer responsive layout styles */

@@ -60,3 +60,4 @@ export default function Footer() {
     </footer>
   );
 }
+/* Footer responsive styles */
