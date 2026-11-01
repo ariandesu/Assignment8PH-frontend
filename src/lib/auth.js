@@ -25,3 +25,4 @@ export const auth = betterAuth({
 });
 
 export default auth;
+// Google OAuth and protected route configuration
