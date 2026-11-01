@@ -165,14 +165,41 @@ export default function Navbar() {
               {link.name}
             </Link>
           ))}
-          {user && (
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-red-600 dark:text-red-400"
-            >
-              <LogOut className="w-4 h-4" /> Logout
-            </button>
+          {user ? (
+            <>
+              {/* Account links, same as the profile dropdown */}
+              <div className="flex items-center gap-3 px-3 pt-4 pb-2 mt-3 border-t border-sage/40 dark:border-white/10">
+                <Avatar src={user.image} name={user.name} />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-forest-900 dark:text-white truncate">{user.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                </div>
+              </div>
+              {USER_LINKS.map(({ name, href, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium ${
+                    isActive(href) ? 'bg-sage/60 dark:bg-white/10 text-forest-600 dark:text-white' : 'text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" /> {name}
+                </Link>
+              ))}
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-3 py-2 mt-1 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+              >
+                <LogOut className="w-4 h-4" /> Logout
+              </button>
+            </>
+          ) : (
+            !isPending && (
+              <Button asChild className="w-full mt-3">
+                <Link href="/login">Login</Link>
+              </Button>
+            )
           )}
         </div>
       )}
