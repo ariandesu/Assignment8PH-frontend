@@ -1,4 +1,6 @@
 export function LoadingSkeleton({ className = '' }) {
+  // Loading skeletons for event cards, details pages, manage events and joined events
+
   return (
     <div
       className={`animate-pulse rounded-xl bg-sage dark:bg-[#1f2d26] h-full w-full ${className}`}

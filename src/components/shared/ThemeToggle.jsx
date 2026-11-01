@@ -1,7 +1,9 @@
 'use client';
 
 import { useTheme } from 'next-themes';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon } from 'lucide.react';
+
+// Dark mode toggle - switches entire system including navbar, forms, cards, dialogs, footer and dashboards
 
 export function ThemeToggle() {
   const { setTheme, theme } = useTheme();
