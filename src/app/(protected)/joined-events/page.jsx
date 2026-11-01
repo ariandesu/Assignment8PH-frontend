@@ -1,126 +1,80 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
-// Joined events page showing all events joined by the current user, sorted by event date
-
-import { useEffect } from 'react';
-import { useJoinedEvents } from '@/hooks/useEvents';
-import { LoadingSkeleton } from '@/components/shared/LoadingSkeleton';
-import Image from 'next/image';
-import { formatDate } from '@/lib/utils';
-import { Calendar, MapPin, User, Users, Clock } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Calendar, CheckCircle2, Clock, MapPin, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { getJoinedEvents } from '@/lib/api';
+import { formatDateTime, isEventExpired } from '@/lib/utils';
+import { LoadingSkeleton } from '@/components/shared/LoadingSkeleton';
+import EventImage from '@/components/shared/EventImage';
 
 export default function JoinedEventsPage() {
-  const { events: joinedEvents, loading, error } = useJoinedEvents();
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (error) toast.error(error);
-  }, [error]);
-
-  if (loading) {
-    return (
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="font-heading text-2xl font-bold text-forest-900 dark:text-white mb-6">
-            My Joined Events
-          </h1>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex gap-4">
-                <LoadingSkeleton className="w-48 h-48" />
-                <div className="flex-1">
-                  <LoadingSkeleton className="h-4 w-3/4 mb-3" />
-                  <LoadingSkeleton className="h-3 w-full mb-2" />
-                  <LoadingSkeleton className="h-3 w-1/2 mb-2" />
-                  <LoadingSkeleton className="h-3 w-3/4" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
+    getJoinedEvents()
+      .then((data) => setEvents(data.events || []))
+      .catch((err) => toast.error(err.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
-    <section className="py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="font-heading text-2xl font-bold text-forest-900 dark:text-white">
-            My Joined Events
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            All the events you have joined, sorted by event date.
-          </p>
-        </div>
-
-        {joinedEvents.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-[#16221c] rounded-2xl border border-sage/50">
-            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-[#1f2d26] flex items-center justify-center mx-auto mb-4 text-gray-400">
-              <Users className="w-8 h-8" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No joined events</h3>
-            <p className="text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
-              You haven&rsquo;t joined any events yet. Browse upcoming events and join initiatives that matter to you.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {joinedEvents.map((event) => (
-              <div key={event._id} className="card flex flex-col md:flex-row gap-4 p-5">
-                <div className="relative h-32 md:h-auto md:w-48 overflow-hidden rounded-xl shrink-0">
-                  <Image
-                    src={event.image}
-                    alt={event.title}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 200px, 150px"
-                  />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="font-heading text-lg font-bold text-forest-900 dark:text-white mb-1 line-clamp-1">
-                        {event.title}
-                      </h3>
-                      <p className="text-xs font-medium text-forest-600 dark:text-forest-400 uppercase tracking-wider mb-3">
-                        {event.category}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span>
-                        <strong className="text-gray-900 dark:text-white">Date:</strong> {formatDate(event.eventDate)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-gray-400" />
-                      <span className="line-clamp-1">
-                        <strong className="text-gray-900 dark:text-white">Location:</strong> {event.location}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-400" />
-                      <span>
-                        <strong className="text-gray-900 dark:text-white">Organizer:</strong> {event.creatorEmail}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded-full bg-forest-100 dark:bg-[#1f2d26]/30 text-forest-700 dark:text-forest-300 text-xs font-medium">
-                        Confirmed
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+    <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="mb-10">
+        <h1 className="section-title">Joined Events</h1>
+        <p className="section-subtitle">Every event you have signed up for, sorted by event date.</p>
       </div>
+
+      {loading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="card p-4 flex gap-4">
+              <LoadingSkeleton className="w-36 h-28 shrink-0" />
+              <div className="flex-1 space-y-3 py-1">
+                <LoadingSkeleton className="h-5 w-2/3" />
+                <LoadingSkeleton className="h-3 w-1/2" />
+                <LoadingSkeleton className="h-3 w-1/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : events.length === 0 ? (
+        <div className="card p-12 text-center">
+          <p className="text-lg font-semibold text-forest-900 dark:text-white">You haven&rsquo;t joined any events yet</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Browse upcoming events and join one that matters to you.</p>
+          <Link href="/events" className="btn-primary inline-block mt-6">Browse Events</Link>
+        </div>
+      ) : (
+        <ol className="space-y-4">
+          {events.map((event) => {
+            const past = isEventExpired(event.eventDate);
+            return (
+              <li key={event._id} className="card flex flex-col sm:flex-row">
+                <EventImage src={event.image} alt={event.title} className="w-full sm:w-48 h-40 sm:h-auto shrink-0" />
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-forest-500 dark:text-forest-300">{event.category}</span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${past ? 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300' : 'bg-sage dark:bg-forest-500/30 text-forest-700 dark:text-forest-100'}`}>
+                      {past ? <Clock className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />} {past ? 'Completed' : 'Going'}
+                    </span>
+                  </div>
+                  <h2 className="font-heading text-lg font-bold text-forest-900 dark:text-white">{event.title}</h2>
+                  <div className="mt-2 grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm text-gray-600 dark:text-gray-400">
+                    <p className="flex items-center gap-2"><Calendar className="w-4 h-4 shrink-0" /> {formatDateTime(event.eventDate)}</p>
+                    <p className="flex items-center gap-2"><MapPin className="w-4 h-4 shrink-0" /> {event.location}</p>
+                    <p className="flex items-center gap-2 sm:col-span-2"><User className="w-4 h-4 shrink-0" /> Organised by {event.creatorName || event.creatorEmail}</p>
+                  </div>
+                  <Link href={`/events/${event._id}`} className="mt-4 self-start text-sm font-semibold text-forest-600 dark:text-forest-300 hover:underline">
+                    View event details →
+                  </Link>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      )}
     </section>
   );
 }
