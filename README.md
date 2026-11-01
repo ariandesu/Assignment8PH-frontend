@@ -1,115 +1,66 @@
-# Kindora Client
+# Kindora – Social Development Events Platform
 
-Next.js frontend for the Kindora Social Impact Platform.
+Kindora is a community-driven platform where people create, join and track social service events in their local area, from winter clothes distribution in Mirpur to tree plantation and beach cleanups.
 
-## Live Website
+**Live site:** https://assignment8ph-2elxi219o-mahirs-projects-9649281e.vercel.app
 
-[Kindora on Vercel](https://kindora.vercel.app)
+**API server repository:** https://github.com/ariandesu/Assignment8-backend
 
 ## Features
 
-- Discover upcoming community service events.
-- Create and manage volunteering events.
-- Join community initiatives.
-- Secure authentication with Google and email/password.
-- JWT-protected REST APIs.
-- Personalized volunteer dashboard.
-- Dark and light theme support.
-- Responsive design for all devices.
-- Loading skeletons and empty states.
+- **Create community events.** Logged-in users can publish an event with a title, description, event type, thumbnail, location and a future date. Validation runs on both the client and the server.
+- **Upcoming events only.** The Upcoming Events page lists events that are still to come, with search by title, location and event-type filters, and pagination.
+- **One-click joining.** Anyone can view event details; logged-in users can join an event, and each user can join an event only once.
+- **Personal dashboards.** *Joined Events* lists everything you signed up for, sorted by event date. *Manage Events* lets you update or delete only the events you created.
+- **Secure authentication.** Email/password and Google login with Better Auth (MongoDB adapter). The Express API is protected with JWTs that are verified against Better Auth's JWKS.
+- **Profile management.** Update your display name and profile picture; changes show up in the navbar right away.
+- **Light and dark themes.** A theme toggle switches the whole site, and loading skeletons appear while data loads. The layout is responsive on mobile, tablet and desktop.
 
-## Technologies Used
+## Tech Stack
 
-- [Next.js 14](https://nextjs.org/) - App Router
-- [Tailwind CSS](https://tailwindcss.com/) - Styling
-- [shadcn/ui](https://ui.shadcn.com/) - UI components
-- [Lucide React](https://lucide.dev/) - Icons
-- [Framer Motion](https://www.framer.com/motion/) - Animations
-- [Better Auth](https://www.better-auth.com/) - Authentication
-- [React Hook Form](https://react-hook-form.com/) - Form handling
-- [Zod](https://zod.dev/) - Schema validation
-- [Sonner](https://sonner.emilkowalski.ski/) - Notifications
-- [next-themes](https://github.com/pacocoursey/next-themes) - Dark mode
+Next.js 14 (App Router) · Tailwind CSS · Better Auth + MongoDB adapter + JWT plugin · React Hook Form + Zod · Sonner · next-themes · lucide-react
 
-## Installation
+## Pages
 
-```bash
-# Install dependencies
-npm install
-
-# Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with your configuration
-
-# Run development server
-npm run dev
-```
+| Route | Access |
+|---|---|
+| `/` | Public: banner, features, 6 nearest upcoming events, gallery, newsletter |
+| `/events` | Public: all upcoming events |
+| `/events/[id]` | Public details; joining requires login |
+| `/login`, `/register` | Public |
+| `/create-event` | Private |
+| `/manage-events`, `/update-event/[id]` | Private (owner only) |
+| `/joined-events` | Private |
+| `/profile` | Private |
 
 ## Environment Variables
 
-Create a `.env.local` file:
+Create `.env.local` for local development; set the same keys in Vercel for production.
 
 ```env
+# Express API base URL
 NEXT_PUBLIC_API_URL=http://localhost:5001
 
-BETTER_AUTH_SECRET=your-long-random-secret
-BETTER_AUTH_URL=http://localhost:3000
+# Better Auth
+BETTER_AUTH_URL=http://localhost:3000       # this app's own URL (the production URL on Vercel)
+BETTER_AUTH_SECRET=long-random-string
+MONGODB_URI=mongodb+srv://...
+DB_NAME=kindora
 
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+# JWT claims (must match the API's JWT_ISSUER / JWT_AUDIENCE)
+JWT_ISSUER=http://localhost:3000
+JWT_AUDIENCE=kindora-api
 
-MONGODB_URI=your-mongodb-connection-string
+# Google login (optional)
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
 ```
 
-## Authentication
+For Google login, add `<BETTER_AUTH_URL>/api/auth/callback/google` as an authorised redirect URI in Google Cloud Console.
 
-- **Better Auth** handles registration, login, and Google social login.
-- JWT tokens are obtained via `authClient.token()` and stored in localStorage.
-- The Express backend verifies JWTs using Better Auth's JWKS endpoint.
-- Protected routes redirect unauthenticated users to login with callback URL preservation.
-
-## Project Structure
-
-```
-client/
-├── src/
-│   ├── app/
-│   │   ├── (public)/          # Public pages
-│   │   ├── (protected)/       # Private pages (auth required)
-│   │   ├── api/auth/          # Better Auth route handler
-│   │   ├── layout.jsx
-│   │   └── globals.css
-│   ├── components/
-│   │   ├── shared/            # Navbar, Footer, ThemeToggle, Skeletons
-│   │   ├── home/              # Homepage sections
-│   │   ├── events/            # Event components
-│   │   └── ui/                # UI primitives (ConfirmDialog, etc.)
-│   ├── lib/                   # Auth, API, utils
-│   ├── hooks/                 # Custom React hooks
-│   └── providers/             # ThemeProvider, AuthProvider
-├── public/
-├── middleware.ts              # Route protection
-├── .env.local
-├── next.config.js
-├── tailwind.config.js
-└── package.json
-```
-
-## Deployment
-
-Deploy to Vercel:
+## Run Locally
 
 ```bash
-vercel --prod
+npm install
+npm run dev
 ```
-
-Make sure to configure all environment variables in the Vercel dashboard, including:
-- `NEXT_PUBLIC_API_URL` - Your Render backend URL
-- `BETTER_AUTH_SECRET` - Same as server
-- `BETTER_AUTH_URL` - Your Vercel URL
-- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
-- `MONGODB_URI` - MongoDB Atlas connection string
-
-## Backend Repository
-
-The Express.js backend is in a separate repository: `kindora-server`
