@@ -2,6 +2,8 @@
 
 export const dynamic = 'force-dynamic';
 
+// Upcoming events listing page with search, category, location filters and pagination
+
 import { getEvents } from '@/lib/api';
 import EventCard from '@/components/events/EventCard';
 import EventFilters from '@/components/events/EventFilters';
