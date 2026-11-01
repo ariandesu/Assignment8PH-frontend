@@ -1,207 +1,160 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
-// Event details page with join functionality and related events
-
-import { getEvent, joinEvent } from '@/lib/api';
-import { authClient } from '@/lib/auth-client';
-import Image from 'next/image';
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Calendar, MapPin, Users, User, ShieldAlert } from 'lucide-react';
-import { formatDate, formatDateTime, isEventExpired } from '@/lib/utils';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import { ArrowLeft, Calendar, CheckCircle2, Clock, Loader2, MapPin, Tag, User, Users } from 'lucide-react';
+import { toast } from 'sonner';
+import { getEvent, getJoinStatus, joinEvent } from '@/lib/api';
+import { useSession } from '@/lib/auth-client';
+import { formatDateTime, isEventExpired } from '@/lib/utils';
+import EventImage from '@/components/shared/EventImage';
+import { LoadingSkeleton } from '@/components/shared/LoadingSkeleton';
 
-export default async function EventDetailsPage({ params }) {
-  const { id } = params;
-  let eventData = null;
-  let error = null;
-  let loading = true;
+export default function EventDetailsPage() {
+  const { id } = useParams();
+  const router = useRouter();
+  const { data: session, isPending: sessionLoading } = useSession();
+  const user = session?.user;
 
-  try {
-    const data = await getEvent(id);
-    eventData = data.event;
-    loading = false;
-  } catch (err) {
-    error = err.message;
-    loading = false;
-  }
-
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [joined, setJoined] = useState(false);
-  const [session, setSession] = useState(null);
+  const [joining, setJoining] = useState(false);
 
   useEffect(() => {
-    const loadSession = async () => {
-      const session = await authClient.getSession();
-      setSession(session);
-    };
-    loadSession();
-  }, []);
+    getEvent(id)
+      .then((data) => setEvent(data.event))
+      .catch((err) => setError(err.status === 404 || err.status === 400 ? 'This event could not be found.' : err.message))
+      .finally(() => setLoading(false));
+  }, [id]);
 
   useEffect(() => {
-    const checkJoin = async () => {
-      if (!session?.user) return;
-      try {
-        // Check if user already joined (we'll attempt join and handle 409)
-      } catch {}
-    };
-    checkJoin();
-  }, [session]);
+    if (!user) return setJoined(false);
+    getJoinStatus(id)
+      .then((data) => setJoined(Boolean(data.joined)))
+      .catch(() => {});
+  }, [id, user]);
+
+  const handleJoin = async () => {
+    if (!user) {
+      toast.info('Please log in to join this event.');
+      router.push(`/login?callbackUrl=${encodeURIComponent(`/events/${id}`)}`);
+      return;
+    }
+    setJoining(true);
+    try {
+      await joinEvent(id);
+      setJoined(true);
+      setEvent((e) => ({ ...e, participantCount: (e.participantCount || 0) + 1 }));
+      toast.success('You have joined this event. See you there!');
+    } catch (err) {
+      if (err.status === 409) setJoined(true);
+      toast.error(err.message);
+    } finally {
+      setJoining(false);
+    }
+  };
 
   if (loading) {
     return (
-      <section className="py-20">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="flex flex-col h-[600px]">
-            <div className="h-64 bg-sage dark:bg-[#1f2d26] animate-pulse rounded-2xl mb-6" />
-            <div className="h-4 bg-sage/40 dark:bg-[#1f2d26]/40 animate-pulse rounded w-1/3 mb-3" />
-            <div className="h-4 bg-sage/40 dark:bg-[#1f2d26]/40 animate-pulse rounded w-2/3 mb-6" />
-            <div className="h-24 bg-sage/40 dark:bg-[#1f2d26]/40 animate-pulse rounded" />
-          </div>
+      <section className="max-w-6xl mx-auto px-4 py-12 grid lg:grid-cols-2 gap-10">
+        <LoadingSkeleton className="h-80 lg:h-[460px]" />
+        <div className="space-y-4">
+          <LoadingSkeleton className="h-6 w-28" />
+          <LoadingSkeleton className="h-10 w-3/4" />
+          <LoadingSkeleton className="h-4 w-1/2" />
+          <LoadingSkeleton className="h-4 w-2/3" />
+          <LoadingSkeleton className="h-32 w-full" />
+          <LoadingSkeleton className="h-12 w-48" />
         </div>
       </section>
     );
   }
 
-  if (error || !eventData) {
+  if (error || !event) {
     return (
-      <section className="py-20">
-        <div className="max-w-4xl mx-auto px-4 text-center py-16">
-          <h2 className="text-2xl font-bold text-forest-900 dark:text-white mb-4">
-            Event Not Found
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">{error || 'The event you are looking for does not exist.'}</p>
-          <a href="/events" className="mt-6 inline-block btn-primary">
-            Browse Events
-          </a>
-        </div>
+      <section className="max-w-xl mx-auto px-4 py-24 text-center">
+        <h1 className="section-title">Event Not Found</h1>
+        <p className="section-subtitle mx-auto">{error || 'This event could not be found.'}</p>
+        <Link href="/events" className="btn-primary inline-block mt-8">Browse Upcoming Events</Link>
       </section>
     );
   }
 
-  const isExpired = isEventExpired(eventData.eventDate);
+  const expired = isEventExpired(event.eventDate);
+  const isOwner = user && String(user.id) === String(event.creatorId);
 
   return (
-    <section className="py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-10">
-          <div className="flex flex-col gap-6">
-            <div className="relative h-80 rounded-2xl overflow-hidden border border-sage/50">
-              <Image
-                src={eventData.image}
-                alt={eventData.title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
-              <div className="absolute top-4 left-4 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/90 dark:bg-[#16221c]/90 backdrop-blur border border-white/50">
-                <span className="text-xs font-medium text-forest-700 dark:text-forest-200 uppercase">
-                  {eventData.category}
-                </span>
-              </div>
-            </div>
+    <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <Link href="/events" className="inline-flex items-center gap-1.5 text-sm font-medium text-forest-600 dark:text-forest-300 hover:underline mb-6">
+        <ArrowLeft className="w-4 h-4" /> Back to events
+      </Link>
 
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <Calendar className="w-4 h-4" />
-                <span>{formatDateTime(eventData.eventDate)}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <MapPin className="w-4 h-4" />
-                <span className="line-clamp-1">{eventData.location}</span>
-              </div>
-            </div>
+      <div className="grid lg:grid-cols-2 gap-10 items-start">
+        <div className="rounded-3xl overflow-hidden shadow-lg">
+          <EventImage src={event.image} alt={event.title} className="w-full h-80 lg:h-[460px]" />
+        </div>
+
+        <div>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sage dark:bg-forest-500/30 text-forest-600 dark:text-forest-200 text-xs font-semibold uppercase tracking-wide">
+            <Tag className="w-3 h-3" /> {event.category}
+          </span>
+          <h1 className="font-heading text-3xl md:text-4xl font-extrabold tracking-tight text-forest-900 dark:text-white mt-4">{event.title}</h1>
+
+          <div className="grid sm:grid-cols-2 gap-3 mt-6">
+            <InfoTile icon={Calendar} label="Date & time" value={formatDateTime(event.eventDate)} />
+            <InfoTile icon={MapPin} label="Location" value={event.location} />
+            <InfoTile icon={User} label="Organised by" value={event.creatorName || event.creatorEmail} />
+            <InfoTile icon={Users} label="Volunteers joined" value={String(event.participantCount || 0)} />
           </div>
 
-          <div className="space-y-6">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <User className="w-4 h-4 text-forest-500" />
-                <h2 className="font-heading text-2xl font-bold text-forest-900 dark:text-white">
-                  {eventData.title}
-                </h2>
-              </div>
-              <p className="text-xs font-medium text-forest-600 dark:text-forest-400 uppercase tracking-wider mb-4">
-                Organized by {eventData.creatorEmail}
+          <h2 className="font-heading text-lg font-bold text-forest-900 dark:text-white mt-8 mb-2">About this event</h2>
+          <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">{event.description}</p>
+
+          <div className="mt-8">
+            {expired ? (
+              <p className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 font-medium">
+                <Clock className="w-4 h-4" /> This event has already taken place
               </p>
-              <div className="bg-white dark:bg-[#16221c] border border-sage/50 rounded-2xl p-6">
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  {eventData.description}
-                </p>
+            ) : isOwner ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-sm text-gray-600 dark:text-gray-400">You are organising this event.</p>
+                <Link href={`/update-event/${event._id}`} className="btn-outline">Edit Event</Link>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white dark:bg-[#16221c] border border-sage/50 rounded-xl p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <Users className="w-5 h-5 text-forest-500" />
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                    Volunteers
-                  </span>
-                </div>
-                <p className="text-xl font-bold text-forest-900 dark:text-white">
-                  {eventData.participantCount || 0}
-                </p>
-              </div>
-              <div className="bg-white dark:bg-[#16221c] border border-sage/50 rounded-xl p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <ShieldAlert className="w-5 h-5 text-forest-500" />
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                    Status
-                  </span>
-                </div>
-                <p className={`text-sm font-medium ${isExpired ? 'text-red-500' : 'text-forest-600 dark:text-forest-400'}`}>
-                  {isExpired ? 'Expired' : 'Upcoming'}
-                </p>
-              </div>
-            </div>
-
-            {session?.user ? (
-              <button
-                onClick={async () => {
-                  try {
-                    await joinEvent(id);
-                    setJoined(true);
-                  } catch (err) {
-                    if (err.status === 409) {
-                      setJoined(true);
-                      alert('You have already joined this event.');
-                    } else if (err.status === 400) {
-                      alert('Cannot join an expired event.');
-                    } else {
-                      alert('Failed to join event. Please try again.');
-                    }
-                  }
-                }}
-                disabled={joined || isExpired}
-                className={`w-full py-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 ${
-                  joined || isExpired
-                    ? 'bg-gray-300 dark:bg-[#304035] text-gray-500 dark:text-gray-400'
-                    : 'bg-forest-500 text-white hover:bg-forest-600'
-                }`}
-              >
-                {joined ? 'Joined' : isExpired ? 'Event Expired' : 'Join Event'}
-              </button>
+            ) : joined ? (
+              <p className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-sage dark:bg-forest-500/30 text-forest-700 dark:text-forest-100 font-semibold">
+                <CheckCircle2 className="w-5 h-5" /> You have joined this event
+              </p>
             ) : (
               <button
-                onClick={() => {
-                  const callbackUrl = encodeURIComponent(`/events/${id}`);
-                  window.location.href = `/login?callbackUrl=${callbackUrl}`;
-                }}
-                className="w-full py-4 rounded-xl font-semibold bg-forest-500 text-white hover:bg-forest-600 transition-all flex items-center justify-center gap-2"
+                type="button"
+                onClick={handleJoin}
+                disabled={joining || sessionLoading}
+                className="btn-primary inline-flex items-center gap-2 disabled:opacity-70"
               >
-                <span>Join Event</span>
+                {joining && <Loader2 className="w-4 h-4 animate-spin" />}
+                {user || sessionLoading ? 'Join Event' : 'Log in to Join'}
               </button>
-            )}
-
-            {session?.user && joined && (
-              <p className="text-sm text-forest-600 dark:text-forest-400 flex items-center gap-2">
-                ✅ You are registered for this event
-              </p>
             )}
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function InfoTile({ icon: Icon, label, value }) {
+  return (
+    <div className="card p-4 flex items-start gap-3">
+      <span className="w-9 h-9 rounded-xl bg-sage dark:bg-forest-500/30 text-forest-500 dark:text-forest-200 flex items-center justify-center shrink-0">
+        <Icon className="w-4 h-4" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</p>
+        <p className="text-sm font-semibold text-forest-900 dark:text-white break-words">{value}</p>
+      </div>
+    </div>
   );
 }
