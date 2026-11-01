@@ -1,5 +1,4 @@
 import { ThemeProvider } from '@/providers/ThemeProvider';
-import { AuthProvider } from '@/providers/AuthProvider';
 import { Toaster } from 'sonner';
 import '@/app/globals.css';
 import Navbar from '@/components/shared/Navbar';
@@ -12,17 +11,23 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <html lang="en" className="scroll-smooth">
-          <body className="min-h-screen bg-cream text-forest-500 antialiased">
-            <Navbar />
-            <main>{children}</main>
-            <Footer />
-            <Toaster position="top-right" richColors />
-          </body>
-        </html>
-      </AuthProvider>
-    </ThemeProvider>
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap"
+        />
+      </head>
+      <body className="min-h-screen flex flex-col antialiased">
+        <ThemeProvider>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <Toaster position="top-right" richColors closeButton />
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }

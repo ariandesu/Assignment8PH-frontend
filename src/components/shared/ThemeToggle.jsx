@@ -1,24 +1,26 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
-import { Sun, Moon } from 'lucide.react';
+import { Sun, Moon } from 'lucide-react';
 
-// Dark mode toggle - switches entire system including navbar, forms, cards, dialogs, footer and dashboards
+export default function ThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-export function ThemeToggle() {
-  const { setTheme, theme } = useTheme();
+  useEffect(() => setMounted(true), []);
+
+  const isDark = mounted && resolvedTheme === 'dark';
 
   return (
     <button
-      onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-      className="w-10 h-10 rounded-full bg-sage border border-sage/40 flex items-center justify-center text-gray-700 dark:text-gray-200 dark:bg-[#1f2d26] hover:bg-white/30 dark:hover:bg-white/10 transition-all"
-      aria-label="Toggle theme"
+      type="button"
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      className="w-9 h-9 rounded-full flex items-center justify-center text-forest-500 dark:text-gray-200 hover:bg-sage dark:hover:bg-white/10 transition-colors"
+      aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+      title={isDark ? 'Light mode' : 'Dark mode'}
     >
-      {theme === 'light' ? (
-        <Moon className="w-5 h-5" />
-      ) : (
-        <Sun className="w-5 h-5" />
-      )}
+      {mounted ? (isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />) : <span className="w-4 h-4" />}
     </button>
   );
 }

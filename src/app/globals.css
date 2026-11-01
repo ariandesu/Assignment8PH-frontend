@@ -53,6 +53,9 @@
   * {
     border-color: rgb(217 233 216);
   }
+  .dark * {
+    border-color: rgb(255 255 255 / 0.1);
+  }
   body {
     background-color: rgb(245 242 233);
     color: rgb(23 77 59);
@@ -71,6 +74,15 @@
   .btn-outline {
     @apply border border-gray-300 dark:border-gray-600 text-forest-500 dark:text-forest-400 px-6 py-3 rounded-xl font-semibold hover:bg-forest-50 dark:hover:bg-white/10 hover:text-forest-600 dark:hover:text-white transition-all;
   }
+  .input {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none transition-all focus:ring-2 focus:ring-forest-500/40 focus:border-forest-500 dark:border-gray-600 dark:bg-[#0f1b16] dark:text-white dark:placeholder:text-gray-500;
+  }
+  .section-title {
+    @apply font-heading text-3xl md:text-4xl font-extrabold tracking-tight text-forest-900 dark:text-white;
+  }
+  .section-subtitle {
+    @apply mt-3 text-gray-600 dark:text-gray-400 max-w-2xl;
+  }
   .card {
     @apply bg-white dark:bg-[#16221c] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden;
   }
@@ -88,4 +100,3 @@
     to { opacity: 1; transform: translateY(0); }
   }
 }
-/* shadcn/ui design system tokens */
