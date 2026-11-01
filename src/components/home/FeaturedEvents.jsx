@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { Calendar } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { LoadingSkeleton } from '@/components/shared/LoadingSkeleton';
 
