@@ -102,3 +102,4 @@ export default function FeaturedEvents({ events = [], loading = false }) {
     </section>
   );
 }
+// Dynamic featured events from API
