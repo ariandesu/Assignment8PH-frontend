@@ -140,6 +140,7 @@ export default function Navbar() {
               </Button>
             )}
 
+            {user && (
             <button
               type="button"
               className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-sage/50 dark:hover:bg-white/10"
@@ -148,59 +149,58 @@ export default function Navbar() {
             >
               {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
+            )}
           </div>
         </div>
       </div>
 
-      {menuOpen && (
-        <div className="md:hidden border-t border-sage/40 dark:border-white/10 bg-white dark:bg-[#0f1b16] px-4 py-4 space-y-1">
+      {/* Main links stay visible on phones, no menu tap needed */}
+      <div className="md:hidden border-t border-sage/40 dark:border-white/10">
+        <div className="flex items-center justify-center gap-2 px-4 py-2">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`block px-3 py-2 rounded-xl text-sm font-medium ${
-                isActive(link.href) ? 'bg-sage/60 dark:bg-white/10 text-forest-600 dark:text-white' : 'text-gray-700 dark:text-gray-300'
+              className={`flex-1 text-center px-3 py-1.5 rounded-xl text-sm font-medium transition-colors ${
+                isActive(link.href)
+                  ? 'bg-sage/60 dark:bg-white/10 text-forest-600 dark:text-white'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-sage/40 dark:hover:bg-white/5'
               }`}
             >
               {link.name}
             </Link>
           ))}
-          {user ? (
-            <>
-              {/* Account links, same as the profile dropdown */}
-              <div className="flex items-center gap-3 px-3 pt-4 pb-2 mt-3 border-t border-sage/40 dark:border-white/10">
-                <Avatar src={user.image} name={user.name} />
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-forest-900 dark:text-white truncate">{user.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
-                </div>
-              </div>
-              {USER_LINKS.map(({ name, href, icon: Icon }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium ${
-                    isActive(href) ? 'bg-sage/60 dark:bg-white/10 text-forest-600 dark:text-white' : 'text-gray-700 dark:text-gray-300'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" /> {name}
-                </Link>
-              ))}
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-3 py-2 mt-1 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
-              >
-                <LogOut className="w-4 h-4" /> Logout
-              </button>
-            </>
-          ) : (
-            !isPending && (
-              <Button asChild className="w-full mt-3">
-                <Link href="/login">Login</Link>
-              </Button>
-            )
-          )}
+        </div>
+      </div>
+
+      {menuOpen && user && (
+        <div className="md:hidden border-t border-sage/40 dark:border-white/10 bg-white dark:bg-[#0f1b16] px-4 py-4 space-y-1">
+          {/* Account links, same as the profile dropdown */}
+          <div className="flex items-center gap-3 px-3 pb-3 mb-1 border-b border-sage/40 dark:border-white/10">
+            <Avatar src={user.image} name={user.name} />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-forest-900 dark:text-white truncate">{user.name}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+            </div>
+          </div>
+          {USER_LINKS.map(({ name, href, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium ${
+                isActive(href) ? 'bg-sage/60 dark:bg-white/10 text-forest-600 dark:text-white' : 'text-gray-700 dark:text-gray-300'
+              }`}
+            >
+              <Icon className="w-4 h-4" /> {name}
+            </Link>
+          ))}
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2 mt-1 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+          >
+            <LogOut className="w-4 h-4" /> Logout
+          </button>
         </div>
       )}
     </nav>
