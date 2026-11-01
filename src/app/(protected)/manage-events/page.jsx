@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 // Manage events page with edit and delete functionality for user-created events
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useMyEvents } from '@/hooks/useEvents';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { LoadingSkeleton } from '@/components/shared/LoadingSkeleton';

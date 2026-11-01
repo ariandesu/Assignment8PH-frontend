@@ -9,7 +9,7 @@ import { useJoinedEvents } from '@/hooks/useEvents';
 import { LoadingSkeleton } from '@/components/shared/LoadingSkeleton';
 import Image from 'next/image';
 import { formatDate } from '@/lib/utils';
-import { Calendar, MapPin, User, Clock } from 'lucide-react';
+import { Calendar, MapPin, User, Users, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function JoinedEventsPage() {

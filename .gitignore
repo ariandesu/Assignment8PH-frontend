@@ -5,3 +5,4 @@ build/
 .out/
 .next/
 .DS_Store
+.vercel

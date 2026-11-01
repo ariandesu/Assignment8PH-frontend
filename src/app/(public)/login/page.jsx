@@ -1,10 +1,8 @@
 'use client';
 
-'use client';
-
 export const dynamic = 'force-dynamic';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
 import { signIn } from '@/lib/auth-client';
@@ -14,8 +12,9 @@ import { toast } from 'sonner';
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams?.get('callbackUrl') || '/events';
+  const callbackUrl = typeof window !== 'undefined' 
+    ? new URLSearchParams(window.location.search).get('callbackUrl') || '/events'
+    : '/events';
 
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
