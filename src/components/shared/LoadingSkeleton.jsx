@@ -1,29 +1,40 @@
 export function LoadingSkeleton({ className = '' }) {
-  // Loading skeletons for event cards, details pages, manage events and joined events
-
-  return (
-    <div
-      className={`animate-pulse rounded-xl bg-sage dark:bg-[#1f2d26] h-full w-full ${className}`}
-    />
-  );
+  return <div className={`animate-pulse rounded-xl bg-sage dark:bg-[#1f2d26] ${className}`} />;
 }
 
 export function EventCardSkeleton() {
   return (
-    <div className="bg-white dark:bg-[#16221c] rounded-2xl border border-sage/50 overflow-hidden flex flex-col h-full">
-      <div className="h-48 bg-sage dark:bg-[#1f2d26] animate-pulse" />
-      <div className="p-5">
-        <div className="h-4 bg-sage/40 dark:bg-[#1f2d26]/40 animate-pulse rounded mb-3 w-3/4" />
-        <div className="flex gap-2 mb-4">
-          <div className="h-3 bg-sage/40 dark:bg-[#1f2d26]/40 animate-pulse rounded w-24" />
-          <div className="h-3 bg-sage/40 dark:bg-[#1f2d26]/40 animate-pulse rounded w-1/3" />
-        </div>
-        <div className="h-16 bg-sage/40 dark:bg-[#1f2d26]/40 animate-pulse rounded" />
-        <div className="mt-4 flex gap-3">
-          <div className="h-8 bg-sage/40 dark:bg-[#1f2d26]/40 animate-pulse rounded w-1/3" />
-          <div className="h-8 bg-sage/40 dark:bg-[#1f2d26]/40 animate-pulse rounded w-1/3" />
-          <div className="h-8 bg-sage/40 dark:bg-[#1f2d26]/40 animate-pulse rounded w-1/3" />
-        </div>
+    <div className="card h-full flex flex-col">
+      <LoadingSkeleton className="h-48 rounded-none" />
+      <div className="p-5 space-y-3 flex-1">
+        <LoadingSkeleton className="h-3 w-20" />
+        <LoadingSkeleton className="h-5 w-3/4" />
+        <LoadingSkeleton className="h-3 w-1/2" />
+        <LoadingSkeleton className="h-3 w-2/3" />
+        <LoadingSkeleton className="h-10 w-full mt-4" />
+      </div>
+    </div>
+  );
+}
+
+export function EventGridSkeleton({ count = 6 }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {Array.from({ length: count }).map((_, i) => (
+        <EventCardSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
+
+export function PageSkeleton() {
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-16 space-y-6">
+      <LoadingSkeleton className="h-9 w-1/3" />
+      <LoadingSkeleton className="h-4 w-1/2" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+        <LoadingSkeleton className="h-64" />
+        <LoadingSkeleton className="h-64" />
       </div>
     </div>
   );
