@@ -1,3 +1,9 @@
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+// shadcn/ui class merger
+export const cn = (...inputs) => twMerge(clsx(inputs));
+
 export const EVENT_CATEGORIES = ['Cleanup', 'Plantation', 'Donation', 'Blood Donation', 'Education', 'Health', 'Other'];
 
 export const formatDate = (value) =>

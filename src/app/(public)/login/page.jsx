@@ -12,6 +12,8 @@ import { signIn } from '@/lib/auth-client';
 import { safeCallbackUrl } from '@/lib/utils';
 import AuthField from '@/components/auth/AuthField';
 import GoogleButton from '@/components/auth/GoogleButton';
+import { Button } from '@/components/ui/button';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const loginSchema = z.object({
   email: z.string().trim().min(1, 'Email is required').email('Enter a valid email address'),
@@ -45,19 +47,19 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md card p-8">
-      <div className="text-center mb-8">
-        <h1 className="section-title">Welcome Back</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">Log in to create, join and manage community events.</p>
-      </div>
+    <Card className="w-full max-w-md p-8">
+      <CardHeader>
+        <CardTitle>Welcome Back</CardTitle>
+        <CardDescription>Log in to create, join and manage community events.</CardDescription>
+      </CardHeader>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <AuthField label="Email" icon={Mail} type="email" placeholder="you@example.com" autoComplete="email" error={errors.email?.message} {...register('email')} />
         <AuthField label="Password" icon={Lock} type="password" placeholder="Your password" autoComplete="current-password" error={errors.password?.message} {...register('password')} />
 
-        <button type="submit" disabled={loading} className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-70">
+        <Button type="submit" disabled={loading} className="w-full">
           {loading && <Loader2 className="w-4 h-4 animate-spin" />} Log In
-        </button>
+        </Button>
       </form>
 
       <div className="relative my-6">
@@ -75,7 +77,7 @@ function LoginForm() {
           Create an account
         </Link>
       </p>
-    </div>
+    </Card>
   );
 }
 

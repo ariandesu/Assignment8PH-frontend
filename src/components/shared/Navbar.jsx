@@ -2,13 +2,22 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Menu, X, LogOut, PlusCircle, Settings2, CalendarCheck, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { authClient, useSession } from '@/lib/auth-client';
 import { clearToken } from '@/lib/api';
 import ThemeToggle from './ThemeToggle';
 import Avatar from './Avatar';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const NAV_LINKS = [
   { name: 'Home', href: '/' },
@@ -37,21 +46,10 @@ export default function Navbar() {
   const { data: session, isPending } = useSession();
   const user = session?.user;
   const [menuOpen, setMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
 
   useEffect(() => {
     setMenuOpen(false);
-    setDropdownOpen(false);
   }, [pathname]);
-
-  useEffect(() => {
-    const onClick = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false);
-    };
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
-  }, []);
 
   const handleLogout = async () => {
     await authClient.signOut();
@@ -92,61 +90,54 @@ export default function Navbar() {
               <span className="w-9 h-9 rounded-full bg-sage dark:bg-[#1f2d26] animate-pulse" />
             ) : user ? (
               <div className="flex items-center gap-3">
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    type="button"
-                    onClick={() => setDropdownOpen((o) => !o)}
-                    className="group relative flex items-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-500"
-                    aria-haspopup="menu"
-                    aria-expanded={dropdownOpen}
-                    aria-label={`Account menu for ${user.name}`}
-                  >
-                    <Avatar src={user.image} name={user.name} />
-                    {/* Display name on hover */}
-                    <span className="pointer-events-none absolute right-0 top-full mt-2 whitespace-nowrap rounded-lg bg-forest-900 dark:bg-white px-3 py-1.5 text-xs font-medium text-white dark:text-forest-900 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                      {user.name}
-                    </span>
-                  </button>
-
-                  {dropdownOpen && (
-                    <div
-                      role="menu"
-                      className="absolute right-0 mt-3 w-60 rounded-2xl border border-sage/60 dark:border-white/10 bg-white dark:bg-[#16221c] shadow-xl p-2 animate-fade-in"
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="group relative flex items-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-500"
+                      aria-label={`Account menu for ${user.name}`}
                     >
-                      <div className="px-3 py-2 border-b border-sage/60 dark:border-white/10 mb-1">
-                        <p className="text-sm font-semibold text-forest-900 dark:text-white truncate">{user.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
-                      </div>
-                      {USER_LINKS.map(({ name, href, icon: Icon }) => (
-                        <Link
-                          key={href}
-                          href={href}
-                          role="menuitem"
-                          className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors ${
-                            isActive(href)
-                              ? 'bg-sage/60 dark:bg-white/10 text-forest-600 dark:text-white font-medium'
-                              : 'text-gray-700 dark:text-gray-200 hover:bg-sage/40 dark:hover:bg-white/5'
-                          }`}
-                        >
+                      <Avatar src={user.image} name={user.name} />
+                      {/* Display name on hover */}
+                      <span className="pointer-events-none absolute right-0 top-full mt-2 whitespace-nowrap rounded-lg bg-forest-900 dark:bg-white px-3 py-1.5 text-xs font-medium text-white dark:text-forest-900 opacity-0 group-hover:opacity-100 group-data-[state=open]:opacity-0 transition-opacity shadow-lg">
+                        {user.name}
+                      </span>
+                    </button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent>
+                    <DropdownMenuLabel>
+                      <p className="text-sm font-semibold text-forest-900 dark:text-white truncate">{user.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {USER_LINKS.map(({ name, href, icon: Icon }) => (
+                      <DropdownMenuItem
+                        key={href}
+                        asChild
+                        className={isActive(href) ? 'bg-sage/60 dark:bg-white/10 text-forest-600 dark:text-white font-medium' : ''}
+                      >
+                        <Link href={href}>
                           <Icon className="w-4 h-4" /> {name}
                         </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={handleLogout}
-                  className="hidden sm:flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                  className="hidden sm:inline-flex gap-1.5 font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
                 >
                   <LogOut className="w-4 h-4" /> Logout
-                </button>
+                </Button>
               </div>
             ) : (
-              <Link href="/login" className="btn-primary text-sm !px-5 !py-2">
-                Login
-              </Link>
+              <Button asChild size="sm" className="px-5">
+                <Link href="/login">Login</Link>
+              </Button>
             )}
 
             <button

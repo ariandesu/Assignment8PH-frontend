@@ -2,10 +2,13 @@ import Link from 'next/link';
 import { Calendar, MapPin, Tag } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import EventImage from '@/components/shared/EventImage';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 export default function EventCard({ event }) {
   return (
-    <article className="card h-full flex flex-col group">
+    <Card asChild className="h-full flex flex-col group">
+    <article>
       <div className="relative h-48 overflow-hidden">
         <EventImage
           src={event.image}
@@ -28,10 +31,11 @@ export default function EventCard({ event }) {
           <MapPin className="w-4 h-4 shrink-0 text-forest-500 dark:text-forest-300" />
           <span className="line-clamp-1">{event.location}</span>
         </div>
-        <Link href={`/events/${event._id}`} className="btn-primary mt-auto text-center text-sm">
-          View Event
-        </Link>
+        <Button asChild className="mt-auto text-sm">
+          <Link href={`/events/${event._id}`}>View Event</Link>
+        </Button>
       </div>
     </article>
+    </Card>
   );
 }

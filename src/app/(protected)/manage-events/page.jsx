@@ -9,6 +9,8 @@ import { formatDate, isEventExpired } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EventGridSkeleton } from '@/components/shared/LoadingSkeleton';
 import EventImage from '@/components/shared/EventImage';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 export default function ManageEventsPage() {
   const [events, setEvents] = useState([]);
@@ -45,9 +47,11 @@ export default function ManageEventsPage() {
           <h1 className="section-title">Manage Events</h1>
           <p className="section-subtitle">Update or delete the events you have created.</p>
         </div>
-        <Link href="/create-event" className="btn-primary inline-flex items-center gap-2 self-start">
-          <PlusCircle className="w-4 h-4" /> New Event
-        </Link>
+        <Button asChild className="self-start">
+          <Link href="/create-event">
+            <PlusCircle className="w-4 h-4" /> New Event
+          </Link>
+        </Button>
       </div>
 
       {loading ? (
@@ -63,7 +67,8 @@ export default function ManageEventsPage() {
           {events.map((event) => {
             const past = isEventExpired(event.eventDate);
             return (
-              <article key={event._id} className="card h-full flex flex-col">
+              <Card asChild key={event._id} className="h-full flex flex-col">
+              <article>
                 <div className="relative h-44">
                   <EventImage src={event.image} alt={event.title} className="w-full h-full" />
                   <span className={`absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-semibold ${past ? 'bg-gray-800/80 text-white' : 'bg-orange text-forest-900'}`}>
@@ -79,22 +84,23 @@ export default function ManageEventsPage() {
                     <p className="flex items-center gap-2"><Users className="w-4 h-4 shrink-0" /> {event.participantCount || 0} joined</p>
                   </div>
                   <div className="mt-auto grid grid-cols-3 gap-2">
-                    <Link href={`/events/${event._id}`} className="inline-flex items-center justify-center gap-1 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-sage/40 dark:hover:bg-white/10">
-                      <Eye className="w-4 h-4" /> View
-                    </Link>
-                    <Link href={`/update-event/${event._id}`} className="inline-flex items-center justify-center gap-1 py-2 rounded-xl bg-forest-500 text-white text-sm font-medium hover:bg-forest-600">
-                      <Pencil className="w-4 h-4" /> Update
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => setToDelete(event)}
-                      className="inline-flex items-center justify-center gap-1 py-2 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600"
-                    >
+                    <Button asChild variant="secondary" size="sm" className="gap-1 px-2 font-medium">
+                      <Link href={`/events/${event._id}`}>
+                        <Eye className="w-4 h-4" /> View
+                      </Link>
+                    </Button>
+                    <Button asChild size="sm" className="gap-1 px-2 font-medium">
+                      <Link href={`/update-event/${event._id}`}>
+                        <Pencil className="w-4 h-4" /> Update
+                      </Link>
+                    </Button>
+                    <Button type="button" variant="destructive" size="sm" onClick={() => setToDelete(event)} className="gap-1 px-2 font-medium">
                       <Trash2 className="w-4 h-4" /> Delete
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </article>
+              </Card>
             );
           })}
         </div>

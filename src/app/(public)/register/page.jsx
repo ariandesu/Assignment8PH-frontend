@@ -12,6 +12,8 @@ import { signUp } from '@/lib/auth-client';
 import { safeCallbackUrl } from '@/lib/utils';
 import AuthField from '@/components/auth/AuthField';
 import GoogleButton from '@/components/auth/GoogleButton';
+import { Button } from '@/components/ui/button';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, 'Name must be at least 2 characters').max(60, 'Name is too long'),
@@ -64,11 +66,11 @@ function RegisterForm() {
   };
 
   return (
-    <div className="w-full max-w-md card p-8">
-      <div className="text-center mb-8">
-        <h1 className="section-title">Create Your Account</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">Join neighbours who turn good intentions into action.</p>
-      </div>
+    <Card className="w-full max-w-md p-8">
+      <CardHeader>
+        <CardTitle>Create Your Account</CardTitle>
+        <CardDescription>Join neighbours who turn good intentions into action.</CardDescription>
+      </CardHeader>
 
       <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4" noValidate>
         <AuthField label="Name" icon={User} placeholder="Your full name" autoComplete="name" error={errors.name?.message} {...register('name')} />
@@ -85,9 +87,9 @@ function RegisterForm() {
           {...register('password')}
         />
 
-        <button type="submit" disabled={loading} className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-70">
+        <Button type="submit" disabled={loading} className="w-full">
           {loading && <Loader2 className="w-4 h-4 animate-spin" />} Register
-        </button>
+        </Button>
       </form>
 
       <div className="relative my-6">
@@ -105,7 +107,7 @@ function RegisterForm() {
           Log in
         </Link>
       </p>
-    </div>
+    </Card>
   );
 }
 

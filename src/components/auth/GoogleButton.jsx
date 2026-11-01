@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { signIn } from '@/lib/auth-client';
+import { Button } from '@/components/ui/button';
 
 const GoogleLogo = () => (
   <svg viewBox="0 0 48 48" className="w-5 h-5" aria-hidden="true">
@@ -28,14 +29,9 @@ export default function GoogleButton({ callbackURL = '/' }) {
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={loading}
-      className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#16221c] text-gray-800 dark:text-white font-medium hover:bg-gray-50 dark:hover:bg-white/10 transition-all disabled:opacity-70"
-    >
+    <Button type="button" variant="secondary" onClick={handleClick} disabled={loading} className="w-full gap-3 px-4 font-medium">
       {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <GoogleLogo />}
       Continue with Google
-    </button>
+    </Button>
   );
 }

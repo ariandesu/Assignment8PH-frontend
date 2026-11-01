@@ -2,6 +2,9 @@
 
 import { forwardRef, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 const AuthField = forwardRef(function AuthField({ label, icon: Icon, error, type = 'text', hint, ...props }, ref) {
   const [show, setShow] = useState(false);
@@ -9,17 +12,15 @@ const AuthField = forwardRef(function AuthField({ label, icon: Icon, error, type
 
   return (
     <div>
-      <label htmlFor={props.name} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-        {label}
-      </label>
+      <Label htmlFor={props.name}>{label}</Label>
       <div className="relative">
         {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />}
-        <input
+        <Input
           ref={ref}
           id={props.name}
           type={isPassword && show ? 'text' : type}
           aria-invalid={Boolean(error)}
-          className={`input ${Icon ? 'pl-10' : ''} ${isPassword ? 'pr-11' : ''} ${error ? '!border-red-500' : ''}`}
+          className={cn(Icon && 'pl-10', isPassword && 'pr-11')}
           {...props}
         />
         {isPassword && (
