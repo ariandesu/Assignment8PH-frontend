@@ -1,81 +1,81 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Filter, MapPin, SortAsc } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Search, MapPin, X } from 'lucide-react';
+import { EVENT_CATEGORIES } from '@/lib/utils';
 
-const CATEGORIES = ['Donation', 'Plantation', 'Cleanup', 'Blood Donation', 'Education', 'Health', 'Other'];
-const SORT_OPTIONS = [
-  { value: 'eventDate', label: 'Date (Earliest First)' },
-  { value: 'createdAt', label: 'Recently Created' },
-];
+export default function EventFilters({ values, onChange }) {
+  const [search, setSearch] = useState(values.search);
+  const [location, setLocation] = useState(values.location);
 
-export default function EventFilters({ search, category, location, sort }) {
-  const [open, setOpen] = useState(false);
+  // Keep inputs in sync when the URL changes (back/forward)
+  useEffect(() => setSearch(values.search), [values.search]);
+  useEffect(() => setLocation(values.location), [values.location]);
+
+  // Debounce typing so we don't request on every key press
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (search !== values.search || location !== values.location) onChange({ search, location });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [search, location]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const hasFilters = values.search || values.location || values.category;
 
   return (
-    <div className="bg-white dark:bg-[#16221c] border border-sage/50 rounded-2xl p-6">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+    <div className="card p-4 sm:p-5 space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div className="relative">
-          <div className="absolute left-3 top-3 text-gray-400">
-            <Search className="w-4 h-4" />
-          </div>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
-            type="text"
-            placeholder="Search events..."
-            defaultValue={search}
-            className="w-full pl-10 py-3 rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-[#0f1b16] text-gray-900 dark:text-white focus:ring-2 focus:ring-forest-500 focus:border-forest-500 outline-none transition-all"
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by event title"
+            className="input pl-10"
+            aria-label="Search events by title"
           />
         </div>
-
-        <div className="flex flex-wrap gap-4">
-          <div className="relative group">
-            <button
-              onClick={() => setOpen(!open)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-[#0f1b16] text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-forest-500 outline-none"
-            >
-              <Filter className="w-4 h-4" />
-              <span>Filters</span>
-            </button>
-            {open && (
-              <div className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-[#16221c] border border-sage/50 rounded-xl p-4 shadow-lg z-50">
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase">Category</p>
-                    <div className="flex flex-wrap gap-2">
-                      {CATEGORIES.map((cat) => (
-                        <button
-                          key={cat}
-                          className={`px-3 py-1.5 rounded-lg text-xs border transition-colors ${
-                            category === cat
-                              ? 'bg-forest-500 text-white border-forest-500'
-                              : 'border-gray-300 dark:border-gray-600 dark:bg-[#0f1b16] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/10'
-                          }`}
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase">Sort by</p>
-                    {SORT_OPTIONS.map((opt) => (
-                      <button
-                        key={opt.value}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm border-b border-gray-100 dark:border-gray-700/50 last:border-b-0 transition-colors ${
-                          sort === opt.value
-                            ? 'text-forest-600 dark:text-forest-400 font-semibold bg-forest-50 dark:bg-[#1f2d26]/30'
-                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/10'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="relative">
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="search"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="Filter by location, e.g. Mirpur"
+            className="input pl-10"
+            aria-label="Filter events by location"
+          />
         </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {['', ...EVENT_CATEGORIES].map((cat) => {
+          const active = values.category === cat;
+          return (
+            <button
+              key={cat || 'all'}
+              type="button"
+              onClick={() => onChange({ category: cat })}
+              className={`px-3.5 py-1.5 rounded-full text-sm border transition-colors ${
+                active
+                  ? 'bg-forest-500 text-white border-forest-500'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-sage/50 dark:hover:bg-white/10'
+              }`}
+            >
+              {cat || 'All types'}
+            </button>
+          );
+        })}
+        {hasFilters && (
+          <button
+            type="button"
+            onClick={() => onChange({ search: '', location: '', category: '' })}
+            className="ml-auto inline-flex items-center gap-1 text-sm text-red-600 dark:text-red-400 hover:underline"
+          >
+            <X className="w-4 h-4" /> Clear filters
+          </button>
+        )}
       </div>
     </div>
   );
