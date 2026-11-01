@@ -1,156 +1,90 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { signIn } from '@/lib/auth-client';
-import { setToken } from '@/lib/api';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Loader2, Mail, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { signIn } from '@/lib/auth-client';
+import { safeCallbackUrl } from '@/lib/utils';
+import AuthField from '@/components/auth/AuthField';
+import GoogleButton from '@/components/auth/GoogleButton';
 
-export default function LoginPage() {
+const loginSchema = z.object({
+  email: z.string().trim().min(1, 'Email is required').email('Enter a valid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+function LoginForm() {
   const router = useRouter();
-  const callbackUrl = typeof window !== 'undefined' 
-    ? new URLSearchParams(window.location.search).get('callbackUrl') || '/events'
-    : '/events';
-
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [errors, setErrors] = useState({});
+  const searchParams = useSearchParams();
+  const callbackUrl = safeCallbackUrl(searchParams.get('callbackUrl'), '/');
   const [loading, setLoading] = useState(false);
 
-  const validate = () => {
-    const newErrors = {};
-    if (!formData.email) newErrors.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Invalid email';
-    if (!formData.password) newErrors.password = 'Password is required';
-    else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const onSubmit = async (values) => {
     setLoading(true);
-    try {
-      const result = await signIn.email({
-        email: formData.email,
-        password: formData.password,
-        callbackUrl: callbackUrl,
-      });
-      if (result?.token) {
-        setToken(result.token);
-        toast.success('Welcome back!');
-        router.push(callbackUrl);
-        router.refresh();
-      }
-    } catch (err) {
-      toast.error(err.message || 'Login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const { error } = await signIn.email({ email: values.email, password: values.password });
+    setLoading(false);
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    try {
-      await signIn.social({
-        provider: 'google',
-        callbackUrl: callbackUrl,
-      });
-    } catch (err) {
-      toast.error(err.message || 'Google login failed');
-    } finally {
-      setLoading(false);
+    if (error) {
+      toast.error(error.status === 401 ? 'Incorrect email or password.' : error.message || 'Login failed. Please try again.');
+      return;
     }
+
+    toast.success('Welcome back! You are now logged in.');
+    router.replace(callbackUrl);
+    router.refresh();
   };
 
   return (
-    <div className="min-h-[calc(100vh-200px)] flex items-center justify-center bg-cream py-12 px-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-10">
-          <div className="flex items-center gap-2 justify-center mb-4">
-            <div className="w-10 h-10 bg-forest-500 rounded-lg flex items-center justify-center">
-              <span className="text-white text-xl font-bold">🌱</span>
-            </div>
-            <span className="font-heading text-2xl font-bold text-forest-900 dark:text-white">Kindora</span>
-          </div>
-          <h2 className="font-heading text-2xl font-bold text-forest-900 dark:text-white">Welcome Back</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Sign in to continue being part of our community.</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className={`w-full px-4 py-3 rounded-xl border transition-all focus:ring-2 focus:ring-forest-500 focus:border-forest-500 outline-none ${
-                errors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-600 dark:bg-[#16221c] text-gray-900 dark:text-white'
-              }`}
-              placeholder="user@example.com"
-            />
-            {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
-          </div>
-
-          <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className={`w-full px-4 py-3 rounded-xl border transition-all focus:ring-2 focus:ring-forest-500 focus:border-forest-500 outline-none ${
-                errors.password ? 'border-red-500' : 'border-gray-300 dark:border-gray-600 dark:bg-[#16221c] text-gray-900 dark:text-white'
-              }`}
-              placeholder="••••••••"
-            />
-            {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full btn-primary py-4 disabled:opacity-70 flex items-center justify-center gap-2"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Log In'}
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-          Don&rsquo;t have an account?{' '}
-          <Link href="/register" className="text-forest-600 dark:text-forest-400 font-medium hover:underline">
-            Register
-          </Link>
-        </p>
-
-        <div className="relative mt-8">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-gray-300 dark:border-gray-600"></span>
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white dark:bg-[#0f1b16] px-4 text-gray-500 dark:text-gray-400">
-              Or continue with
-            </span>
-          </div>
-        </div>
-
-        <button
-          onClick={handleGoogleSignIn}
-          disabled={loading}
-          className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-[#16221c] text-gray-700 dark:text-white font-medium hover:bg-gray-50 dark:hover:bg-white/10 transition-all disabled:opacity-70"
-        >
-          <span>G</span> Continue with Google
-        </button>
+    <div className="w-full max-w-md card p-8">
+      <div className="text-center mb-8">
+        <h1 className="section-title">Welcome Back</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">Log in to create, join and manage community events.</p>
       </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <AuthField label="Email" icon={Mail} type="email" placeholder="you@example.com" autoComplete="email" error={errors.email?.message} {...register('email')} />
+        <AuthField label="Password" icon={Lock} type="password" placeholder="Your password" autoComplete="current-password" error={errors.password?.message} {...register('password')} />
+
+        <button type="submit" disabled={loading} className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-70">
+          {loading && <Loader2 className="w-4 h-4 animate-spin" />} Log In
+        </button>
+      </form>
+
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-200 dark:border-gray-700" /></div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-white dark:bg-[#16221c] px-3 text-gray-500 dark:text-gray-400">or</span>
+        </div>
+      </div>
+
+      <GoogleButton callbackURL={callbackUrl} />
+
+      <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
+        New to Kindora?{' '}
+        <Link href={`/register${callbackUrl !== '/' ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`} className="text-forest-600 dark:text-forest-300 font-semibold hover:underline">
+          Create an account
+        </Link>
+      </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <section className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-16">
+      <Suspense fallback={<div className="w-full max-w-md h-[520px] card animate-pulse" />}>
+        <LoginForm />
+      </Suspense>
+    </section>
   );
 }
