@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 
 export default function ManageEventsPage() {
   const { events: myEvents, loading, error, deleteEvent: deleteEventApi } = useMyEvents();
-  const [eventToDelete, setEventToDelete] = useState<string | null>(null);
+  const [eventToDelete, setEventToDelete] = useState(null);
 
   useEffect(() => {
     if (error) toast.error(error);

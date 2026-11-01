@@ -20,9 +20,9 @@ const profileSchema = z.object({
 export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState(null);
 
-  const form = useForm<ProfileFormValues>({
+  const form = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: { name: '', email: '', image: '' },
   });
