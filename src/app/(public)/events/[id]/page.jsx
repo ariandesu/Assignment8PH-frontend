@@ -2,6 +2,8 @@
 
 export const dynamic = 'force-dynamic';
 
+// Event details page with join functionality and related events
+
 import { getEvent, joinEvent } from '@/lib/api';
 import { authClient } from '@/lib/auth-client';
 import Image from 'next/image';
