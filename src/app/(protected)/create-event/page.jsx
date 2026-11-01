@@ -2,6 +2,8 @@
 
 export const dynamic = 'force-dynamic';
 
+// Create event form with Zod validation - title, description, category, image, location, date
+
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
