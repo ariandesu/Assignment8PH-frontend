@@ -1,51 +1,62 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+import { authClient } from './auth-client';
 
-const getToken = () => {
-  if (typeof window === 'undefined') return null;
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001').replace(/\/$/, '');
+
+// JWT from Better Auth, kept in memory and refreshed shortly before it expires
+let cachedToken = null;
+let cachedExp = 0;
+
+const decodeExp = (token) => {
   try {
-    const token = localStorage.getItem('kindora_token');
-    return token;
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return (payload.exp || 0) * 1000;
   } catch {
-    return null;
+    return 0;
   }
 };
 
-const setToken = (token) => {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('kindora_token', token);
+export const clearToken = () => {
+  cachedToken = null;
+  cachedExp = 0;
 };
 
-const removeToken = () => {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem('kindora_token');
+export const getToken = async () => {
+  if (cachedToken && Date.now() < cachedExp - 60_000) return cachedToken;
+  const { data, error } = await authClient.token();
+  if (error || !data?.token) {
+    clearToken();
+    return null;
+  }
+  cachedToken = data.token;
+  cachedExp = decodeExp(data.token);
+  return cachedToken;
 };
 
-export const api = async (endpoint, options = {}) => {
-  const url = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
-  const token = getToken();
+export const api = async (endpoint, { auth = false, ...options } = {}) => {
+  const headers = { 'Content-Type': 'application/json', ...options.headers };
 
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...options.headers,
-  };
-
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
-
-  if (response.status === 401) {
-    removeToken();
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login?callbackUrl=' + encodeURIComponent(window.location.pathname);
+  if (auth) {
+    const token = await getToken();
+    if (!token) {
+      const error = new Error('Please log in to continue.');
+      error.status = 401;
+      throw error;
     }
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  let response;
+  try {
+    response = await fetch(`${API_URL}${endpoint}`, { ...options, headers, cache: 'no-store' });
+  } catch {
+    throw new Error('Could not reach the server. Please check your connection.');
   }
 
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const error = new Error(data.message || 'API error');
+    if (response.status === 401) clearToken();
+    const error = new Error(data.message || 'Something went wrong. Please try again.');
     error.status = response.status;
     error.data = data;
     throw error;
@@ -54,20 +65,20 @@ export const api = async (endpoint, options = {}) => {
   return data;
 };
 
+// Public
 export const getEvents = (params = {}) => {
-  const query = new URLSearchParams(params).toString();
-  return api(`/api/events${query ? '?' + query : ''}`);
+  const clean = Object.fromEntries(Object.entries(params).filter(([, v]) => v !== '' && v != null));
+  const query = new URLSearchParams(clean).toString();
+  return api(`/api/events${query ? `?${query}` : ''}`);
 };
-
 export const getRecentEvents = () => api('/api/events/recent');
 export const getEvent = (id) => api(`/api/events/${id}`);
-export const createEvent = (data) => api('/api/events', { method: 'POST', body: JSON.stringify(data) });
-export const updateEvent = (id, data) => api(`/api/events/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
-export const deleteEvent = (id) => api(`/api/events/${id}`, { method: 'DELETE' });
-export const joinEvent = (id) => api(`/api/events/${id}/join`, { method: 'POST' });
-export const getMyEvents = () => api('/api/my-events');
-export const getJoinedEvents = () => api('/api/my-joined-events');
-export const getProfile = () => api('/api/users/me');
-export const updateProfile = (data) => api('/api/users/me', { method: 'PATCH', body: JSON.stringify(data) });
 
-export { setToken, removeToken, getToken };
+// Protected (JWT)
+export const createEvent = (data) => api('/api/events', { auth: true, method: 'POST', body: JSON.stringify(data) });
+export const updateEvent = (id, data) => api(`/api/events/${id}`, { auth: true, method: 'PATCH', body: JSON.stringify(data) });
+export const deleteEvent = (id) => api(`/api/events/${id}`, { auth: true, method: 'DELETE' });
+export const joinEvent = (id) => api(`/api/events/${id}/join`, { auth: true, method: 'POST' });
+export const getJoinStatus = (id) => api(`/api/events/${id}/join-status`, { auth: true });
+export const getMyEvents = () => api('/api/my-events', { auth: true });
+export const getJoinedEvents = () => api('/api/my-joined-events', { auth: true });
