@@ -52,7 +52,7 @@ export default function JoinedEventsPage() {
             const past = isEventExpired(event.eventDate);
             return (
               <li key={event._id} className="card flex flex-col sm:flex-row">
-                <EventImage src={event.image} alt={event.title} className="w-full sm:w-48 h-40 sm:h-auto shrink-0" />
+                <EventImage src={event.image} alt={event.title} category={event.category} className="w-full sm:w-48 h-40 sm:h-auto shrink-0" />
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
                     <span className="text-xs font-semibold uppercase tracking-wide text-forest-500 dark:text-forest-300">{event.category}</span>

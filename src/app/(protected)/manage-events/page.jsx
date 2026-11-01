@@ -70,7 +70,7 @@ export default function ManageEventsPage() {
               <Card asChild key={event._id} className="h-full flex flex-col">
               <article>
                 <div className="relative h-44">
-                  <EventImage src={event.image} alt={event.title} className="w-full h-full" />
+                  <EventImage src={event.image} alt={event.title} category={event.category} className="w-full h-full" />
                   <span className={`absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-semibold ${past ? 'bg-gray-800/80 text-white' : 'bg-orange text-forest-900'}`}>
                     {past ? 'Past' : 'Upcoming'}
                   </span>

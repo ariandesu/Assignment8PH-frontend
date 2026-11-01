@@ -13,6 +13,7 @@ export default function EventCard({ event }) {
         <EventImage
           src={event.image}
           alt={event.title}
+          category={event.category}
           className="w-full h-full group-hover:scale-105 transition-transform duration-300"
         />
         <span className="absolute top-3 left-3 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/90 dark:bg-[#16221c]/90 backdrop-blur text-xs font-semibold text-forest-700 dark:text-forest-200 uppercase tracking-wide">

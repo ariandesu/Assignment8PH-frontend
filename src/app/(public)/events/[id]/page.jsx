@@ -94,7 +94,7 @@ export default function EventDetailsPage() {
 
       <div className="grid lg:grid-cols-2 gap-10 items-start">
         <div className="rounded-3xl overflow-hidden shadow-lg">
-          <EventImage src={event.image} alt={event.title} className="w-full h-80 lg:h-[460px]" />
+          <EventImage src={event.image} alt={event.title} category={event.category} className="w-full h-80 lg:h-[460px]" />
         </div>
 
         <div>
