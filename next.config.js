@@ -15,6 +15,10 @@ const nextConfig = {
       },
     ],
   },
+  // Production deployment optimization for Vercel
+  output: 'standalone',
 }
+
+// Optimize responsive layouts for mobile, tablet and desktop
 
 module.exports = nextConfig
