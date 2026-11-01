@@ -43,3 +43,4 @@ export default function Gallery() {
     </section>
   );
 }
+// Community gallery static images
