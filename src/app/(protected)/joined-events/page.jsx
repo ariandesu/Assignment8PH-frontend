@@ -2,6 +2,8 @@
 
 export const dynamic = 'force-dynamic';
 
+// Joined events page showing all events joined by the current user, sorted by event date
+
 import { useEffect } from 'react';
 import { useJoinedEvents } from '@/hooks/useEvents';
 import { LoadingSkeleton } from '@/components/shared/LoadingSkeleton';

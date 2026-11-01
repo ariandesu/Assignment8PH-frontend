@@ -2,6 +2,8 @@
 
 export const dynamic = 'force-dynamic';
 
+// Profile page for updating display name and profile picture
+
 import { useEffect } from 'react';
 import { getProfile, updateProfile } from '@/lib/api';
 import { useForm } from 'react-hook-form';
