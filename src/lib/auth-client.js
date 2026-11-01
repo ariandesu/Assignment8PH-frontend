@@ -9,3 +9,4 @@ export const signUp = authClient.signUp;
 export const signOut = authClient.signOut;
 export const useSession = authClient.useSession;
 export const getSession = authClient.getSession;
+// Better Auth client configuration
