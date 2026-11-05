@@ -2,9 +2,9 @@
 
 Kindora is a community-driven platform where people create, join and track social service events in their local area, from winter clothes distribution in Mirpur to tree plantation and beach cleanups.
 
-**Live site:** https://client-delta-umber-26.vercel.app
+**Live site:** https://assignment8ph-frontend.vercel.app
 
-**API server repository:** https://github.com/ariandesu/Assignment8-backend
+**API server repository:** https://github.com/ariandesu/Assignment8PH-backend
 
 ## Features
 
